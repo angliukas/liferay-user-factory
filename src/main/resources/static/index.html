@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Liferay User Factory</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { border: 1px solid #ccc; padding: 20px; border-radius: 6px; }
+        .status { margin-top: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Liferay User Factory</h1>
+    <div class="card">
+        <p>Upload an Excel file (.xlsx) with columns: email, name, surname.</p>
+        <input type="file" id="fileInput" accept=".xlsx">
+        <button id="uploadBtn">Upload</button>
+        <div id="error" class="status" style="color: red"></div>
+        <div id="summary" class="status hidden"></div>
+        <div id="failures" class="status hidden">
+            <h3>Failed rows</h3>
+            <table>
+                <thead>
+                <tr><th>Row</th><th>Email</th><th>Name</th><th>Surname</th><th>Reason</th></tr>
+                </thead>
+                <tbody id="failureRows"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const errorBox = document.getElementById('error');
+    const summary = document.getElementById('summary');
+    const failures = document.getElementById('failures');
+    const failureRows = document.getElementById('failureRows');
+
+    uploadBtn.addEventListener('click', async () => {
+        errorBox.textContent = '';
+        summary.classList.add('hidden');
+        failures.classList.add('hidden');
+        failureRows.innerHTML = '';
+
+        if (!fileInput.files.length) {
+            errorBox.textContent = 'Please choose a file to upload.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+
+        try {
+            const response = await fetch('/api/users/import', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error('Upload failed: ' + response.statusText);
+            }
+            const result = await response.json();
+            summary.innerHTML = `Imported <strong>${result.created}</strong> of <strong>${result.totalRows}</strong> rows.`;
+            summary.classList.remove('hidden');
+
+            if (result.failures && result.failures.length) {
+                failures.classList.remove('hidden');
+                result.failures.forEach(f => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${f.rowIndex}</td><td>${f.user?.email || ''}</td><td>${f.user?.firstName || ''}</td><td>${f.user?.lastName || ''}</td><td>${f.reason}</td>`;
+                    failureRows.appendChild(tr);
+                });
+            }
+        } catch (e) {
+            errorBox.textContent = e.message;
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload';
+        }
+    });
+</script>
+</body>
+</html>
