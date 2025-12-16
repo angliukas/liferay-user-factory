@@ -5,6 +5,7 @@ import com.example.liferayuserfactory.model.ImportResult;
 import com.example.liferayuserfactory.model.Organization;
 import com.example.liferayuserfactory.model.UserRecord;
 import com.example.liferayuserfactory.config.LiferayProperties;
+import com.example.liferayuserfactory.repository.LiferayUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,14 @@ public class UserImportService {
     private final ExcelUserParser parser;
     private final LiferayClient liferayClient;
     private final LiferayProperties properties;
+    private final LiferayUserRepository userRepository;
 
-    public UserImportService(ExcelUserParser parser, LiferayClient liferayClient, LiferayProperties properties) {
+    public UserImportService(ExcelUserParser parser, LiferayClient liferayClient, LiferayProperties properties,
+                             LiferayUserRepository userRepository) {
         this.parser = parser;
         this.liferayClient = liferayClient;
         this.properties = properties;
+        this.userRepository = userRepository;
     }
 
     public ImportResult importUsers(MultipartFile file, Long organizationId) throws IOException {
@@ -67,13 +71,8 @@ public class UserImportService {
                 failures.add(new FailedRow(i + 1, "Missing roles: " + missingRoles, record));
                 continue;
             }
-            try {
-                if (liferayClient.userExists(record.getEmail())) {
-                    failures.add(new FailedRow(i + 1, "User with this email already exists", record));
-                    continue;
-                }
-            } catch (LiferayException e) {
-                failures.add(new FailedRow(i + 1, "Failed to verify existing user: " + e.getMessage(), record));
+            if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())) {
+                failures.add(new FailedRow(i + 1, "User with this email already exists", record));
                 continue;
             }
             try {
