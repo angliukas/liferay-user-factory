@@ -2,7 +2,6 @@ package com.example.liferayuserfactory.controller;
 
 import com.example.liferayuserfactory.model.ImportResult;
 import com.example.liferayuserfactory.model.Organization;
-import com.example.liferayuserfactory.model.Role;
 import com.example.liferayuserfactory.service.LiferayException;
 import com.example.liferayuserfactory.service.UserImportService;
 import org.springframework.http.HttpStatus;
@@ -33,16 +32,12 @@ public class UploadController {
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     public ResponseEntity<ImportResult> upload(@RequestParam("file") MultipartFile file,
-                                               @RequestParam("organizationId") Long organizationId,
-                                               @RequestParam("roleIds") List<Long> roleIds)
+                                               @RequestParam("organizationId") Long organizationId)
             throws IOException {
         if (organizationId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization is required");
         }
-        if (roleIds == null || roleIds.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one role is required");
-        }
-        ImportResult result = importService.importUsers(file, organizationId, roleIds);
+        ImportResult result = importService.importUsers(file, organizationId);
         return ResponseEntity.ok(result);
     }
 
@@ -50,11 +45,5 @@ public class UploadController {
     @ResponseBody
     public ResponseEntity<List<Organization>> organizations() throws LiferayException {
         return ResponseEntity.ok(importService.getOrganizations());
-    }
-
-    @GetMapping("/roles")
-    @ResponseBody
-    public ResponseEntity<List<Role>> roles() throws LiferayException {
-        return ResponseEntity.ok(importService.getRoles());
     }
 }

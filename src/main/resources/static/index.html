@@ -25,10 +25,6 @@
                 <option value="">-- select an organization --</option>
             </select>
         </div>
-        <div style="margin-bottom: 10px;">
-            <label for="rolesSelect">Roles:</label>
-            <select id="rolesSelect" multiple size="5" style="width: 100%;"></select>
-        </div>
         <input type="file" id="fileInput" accept=".xlsx">
         <button id="uploadBtn">Upload</button>
         <div id="error" class="status" style="color: red"></div>
@@ -52,7 +48,6 @@
     const failures = document.getElementById('failures');
     const failureRows = document.getElementById('failureRows');
     const organizationSelect = document.getElementById('organizationSelect');
-    const rolesSelect = document.getElementById('rolesSelect');
     const organizationSearch = document.getElementById('organizationSearch');
 
     let organizationsCache = [];
@@ -83,26 +78,7 @@
         }
     }
 
-    async function loadRoles() {
-        try {
-            const response = await fetch('/api/users/roles');
-            if (!response.ok) {
-                throw new Error('Unable to load roles');
-            }
-            const roles = await response.json();
-            roles.forEach(role => {
-                const option = document.createElement('option');
-                option.value = role.id;
-                option.textContent = role.name;
-                rolesSelect.appendChild(option);
-            });
-        } catch (e) {
-            errorBox.textContent = e.message;
-        }
-    }
-
     loadOrganizations();
-    loadRoles();
 
     organizationSearch.addEventListener('input', () => {
         renderOrganizations(organizationSearch.value);
@@ -124,17 +100,9 @@
             return;
         }
 
-        if (!rolesSelect.selectedOptions.length) {
-            errorBox.textContent = 'Please select at least one role.';
-            return;
-        }
-
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
         formData.append('organizationId', organizationSelect.value);
-        Array.from(rolesSelect.selectedOptions).forEach(option => {
-            formData.append('roleIds', option.value);
-        });
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = 'Uploading...';
