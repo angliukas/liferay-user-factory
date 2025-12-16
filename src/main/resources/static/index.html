@@ -42,7 +42,7 @@
             <h3>Imported users</h3>
             <table>
                 <thead>
-                <tr><th>User ID</th><th>Email</th></tr>
+                <tr><th>User ID</th><th>Email</th><th>Created</th></tr>
                 </thead>
                 <tbody id="importedRows"></tbody>
             </table>
@@ -51,7 +51,7 @@
             <h3>Existing users</h3>
             <table>
                 <thead>
-                <tr><th>User ID</th><th>Email</th></tr>
+                <tr><th>User ID</th><th>Email</th><th>Created</th></tr>
                 </thead>
                 <tbody id="existingRows"></tbody>
             </table>
@@ -84,6 +84,19 @@
     const organizationSearch = document.getElementById('organizationSearch');
 
     let organizationsCache = [];
+
+    function formatDate(value) {
+        if (!value) {
+            return '';
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        return date.toLocaleString();
+    }
 
     function renderOrganizations(filter = '') {
         const normalizedFilter = filter.trim().toLowerCase();
@@ -162,7 +175,7 @@
                 imported.classList.remove('hidden');
                 result.importedUsers.forEach(user => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td>`;
+                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td><td>${formatDate(user.createDate)}</td>`;
                     importedRows.appendChild(tr);
                 });
             }
@@ -171,7 +184,7 @@
                 existing.classList.remove('hidden');
                 result.existingUsers.forEach(user => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td>`;
+                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td><td>${formatDate(user.createDate)}</td>`;
                     existingRows.appendChild(tr);
                 });
             }
