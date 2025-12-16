@@ -119,7 +119,18 @@ public class UserImportService {
             return;
         }
         Optional<LiferayUser> user = userRepository.findByEmailAddressIgnoreCase(email);
-        user.ifPresent(found -> addSummary(summaries, seenEmails, found));
+        if (user.isPresent()) {
+            addSummary(summaries, seenEmails, user.get());
+            return;
+        }
+
+        String normalizedEmail = email.toLowerCase();
+        if (seenEmails.contains(normalizedEmail)) {
+            return;
+        }
+
+        seenEmails.add(normalizedEmail);
+        summaries.add(new UserSummary(null, email, null));
     }
 
     private void addSummary(List<UserSummary> summaries, Set<String> seenEmails, LiferayUser user) {
