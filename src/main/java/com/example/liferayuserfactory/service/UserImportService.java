@@ -13,11 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 public class UserImportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserImportService.class);
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
     private final ExcelUserParser parser;
     private final LiferayClient liferayClient;
     private final LiferayProperties properties;
@@ -56,6 +59,10 @@ public class UserImportService {
                 failures.add(new FailedRow(i + 1, "Missing email", record));
                 continue;
             }
+            if (!isValidEmail(record.getEmail())) {
+                failures.add(new FailedRow(i + 1, "Invalid email format", record));
+                continue;
+            }
             if (!missingRoles.isEmpty()) {
                 failures.add(new FailedRow(i + 1, "Missing roles: " + missingRoles, record));
                 continue;
@@ -84,5 +91,9 @@ public class UserImportService {
 
     public List<Organization> getOrganizations() throws LiferayException {
         return liferayClient.getOrganizations();
+    }
+
+    private boolean isValidEmail(String email) {
+        return EMAIL_PATTERN.matcher(email).matches();
     }
 }
