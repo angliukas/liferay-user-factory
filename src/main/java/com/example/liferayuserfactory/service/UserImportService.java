@@ -14,7 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @Service
@@ -109,8 +111,23 @@ public class UserImportService {
         if (createdEmails.isEmpty()) {
             return importedUsers;
         }
+
+        Map<String, LiferayUser> usersByEmail = new HashMap<>();
         userRepository.findByEmailAddressIgnoreCaseIn(createdEmails)
-                .forEach(importedUsers::add);
+                .forEach(user -> usersByEmail.put(user.getEmailAddress().toLowerCase(), user));
+
+        createdEmails.forEach(email -> {
+            LiferayUser user = usersByEmail.get(email.toLowerCase());
+            if (user != null) {
+                importedUsers.add(user);
+                return;
+            }
+
+            LiferayUser placeholder = new LiferayUser();
+            placeholder.setEmailAddress(email);
+            importedUsers.add(placeholder);
+        });
+
         return importedUsers;
     }
 
