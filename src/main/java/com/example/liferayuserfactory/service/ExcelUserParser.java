@@ -2,6 +2,7 @@ package com.example.liferayuserfactory.service;
 
 import com.example.liferayuserfactory.model.UserRecord;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -21,18 +22,21 @@ public class ExcelUserParser {
         List<UserRecord> users = new ArrayList<>();
         try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
-            Iterator<Row> iterator = sheet.iterator();
+            DataFormatter formatter = new DataFormatter();
 
             boolean headerProcessed = false;
-            while (iterator.hasNext()) {
-                Row row = iterator.next();
-                if (!headerProcessed && looksLikeHeader(row)) {
+            for (int rowIndex = sheet.getFirstRowNum(); rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null) {
+                    continue;
+                }
+                if (!headerProcessed && looksLikeHeader(row, formatter)) {
                     headerProcessed = true;
                     continue;
                 }
-                String email = getCellValue(row.getCell(0));
-                String firstName = getCellValue(row.getCell(1));
-                String lastName = getCellValue(row.getCell(2));
+                String email = getCellValue(row.getCell(0), formatter);
+                String firstName = getCellValue(row.getCell(1), formatter);
+                String lastName = getCellValue(row.getCell(2), formatter);
 
                 if (email.isBlank() && firstName.isBlank() && lastName.isBlank()) {
                     continue;
@@ -43,23 +47,17 @@ public class ExcelUserParser {
         return users;
     }
 
-    private boolean looksLikeHeader(Row row) {
-        String email = getCellValue(row.getCell(0)).toLowerCase();
-        String firstName = getCellValue(row.getCell(1)).toLowerCase();
-        String lastName = getCellValue(row.getCell(2)).toLowerCase();
+    private boolean looksLikeHeader(Row row, DataFormatter formatter) {
+        String email = getCellValue(row.getCell(0), formatter).toLowerCase();
+        String firstName = getCellValue(row.getCell(1), formatter).toLowerCase();
+        String lastName = getCellValue(row.getCell(2), formatter).toLowerCase();
         return email.contains("email") && firstName.contains("name") && lastName.contains("surname");
     }
 
-    private String getCellValue(Cell cell) {
+    private String getCellValue(Cell cell, DataFormatter formatter) {
         if (cell == null) {
             return "";
         }
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue();
-            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
-            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-            case FORMULA -> cell.getCellFormula();
-            default -> "";
-        };
+        return formatter.formatCellValue(cell);
     }
 }
