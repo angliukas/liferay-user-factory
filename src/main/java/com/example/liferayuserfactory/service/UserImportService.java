@@ -5,6 +5,7 @@ import com.example.liferayuserfactory.model.ImportResult;
 import com.example.liferayuserfactory.model.LiferayUser;
 import com.example.liferayuserfactory.model.Organization;
 import com.example.liferayuserfactory.model.UserRecord;
+import com.example.liferayuserfactory.model.UserSummary;
 import com.example.liferayuserfactory.config.LiferayProperties;
 import com.example.liferayuserfactory.repository.LiferayUserRepository;
 import org.slf4j.Logger;
@@ -106,7 +107,7 @@ public class UserImportService {
         return result;
     }
 
-    private List<LiferayUser> readImportedUsers(List<String> emails) {
+    private List<UserSummary> readImportedUsers(List<String> emails) {
         if (emails.isEmpty()) {
             return new ArrayList<>();
         }
@@ -120,13 +121,13 @@ public class UserImportService {
         userRepository.findByEmailAddressIgnoreCaseIn(emails)
                 .forEach(user -> usersByEmail.put(user.getEmailAddress().toLowerCase(), user));
 
-        List<LiferayUser> importedUsers = new ArrayList<>();
+        List<UserSummary> importedUsers = new ArrayList<>();
         orderByEmail.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())
                 .forEachOrdered(entry -> {
                     LiferayUser user = usersByEmail.get(entry.getKey());
                     if (user != null) {
-                        importedUsers.add(user);
+                        importedUsers.add(new UserSummary(user.getId(), user.getEmailAddress(), user.getCreateDate()));
                     }
                 });
 

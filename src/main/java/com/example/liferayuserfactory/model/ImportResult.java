@@ -3,15 +3,15 @@ package com.example.liferayuserfactory.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.liferayuserfactory.model.LiferayUser;
+import com.example.liferayuserfactory.model.UserSummary;
 
 public class ImportResult {
     private int totalRows;
     private int created;
     private List<FailedRow> failures = new ArrayList<>();
     private List<FailedRow> validationErrors = new ArrayList<>();
-    private List<LiferayUser> importedUsers = new ArrayList<>();
-    private List<LiferayUser> existingUsers = new ArrayList<>();
+    private List<UserSummary> importedUsers = new ArrayList<>();
+    private List<UserSummary> existingUsers = new ArrayList<>();
 
     public int getTotalRows() {
         return totalRows;
@@ -45,19 +45,19 @@ public class ImportResult {
         this.validationErrors = validationErrors;
     }
 
-    public List<LiferayUser> getImportedUsers() {
+    public List<UserSummary> getImportedUsers() {
         return importedUsers;
     }
 
-    public void setImportedUsers(List<LiferayUser> importedUsers) {
+    public void setImportedUsers(List<UserSummary> importedUsers) {
         this.importedUsers = importedUsers;
     }
 
-    public List<LiferayUser> getExistingUsers() {
+    public List<UserSummary> getExistingUsers() {
         return existingUsers;
     }
 
-    public void setExistingUsers(List<LiferayUser> existingUsers) {
+    public void setExistingUsers(List<UserSummary> existingUsers) {
         this.existingUsers = existingUsers;
     }
 }
