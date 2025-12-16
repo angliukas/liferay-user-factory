@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,7 +36,8 @@ class UserImportServiceTest {
 
         when(parser.parse(any())).thenReturn(parsedUsers);
         when(client.findMissingRoles(properties.getDefaultRoleIds())).thenReturn(List.of());
-        when(repository.existsByEmailAddressIgnoreCase("valid@example.com")).thenReturn(false);
+        when(repository.findByEmailAddressIgnoreCase("valid@example.com")).thenReturn(Optional.empty());
+        when(client.userExists("valid@example.com")).thenReturn(false);
         doNothing().when(client).createUser(parsedUsers.get(0), 1L);
 
         UserImportService service = new UserImportService(parser, client, properties, repository);
@@ -57,16 +59,13 @@ class UserImportServiceTest {
         LiferayProperties properties = new LiferayProperties();
         UserRecord existingRecord = new UserRecord("duplicate@example.com", "Existing", "User");
 
-        when(parser.parse(any())).thenReturn(List.of(existingRecord));
-        when(client.findMissingRoles(properties.getDefaultRoleIds())).thenReturn(List.of());
-        when(repository.existsByEmailAddressIgnoreCase(existingRecord.getEmail())).thenReturn(false);
-        when(client.userExists(existingRecord.getEmail())).thenReturn(true);
-
         LiferayUser existingUser = mock(LiferayUser.class);
         when(existingUser.getId()).thenReturn(123L);
         when(existingUser.getEmailAddress()).thenReturn(existingRecord.getEmail());
-        when(repository.findByEmailAddressIgnoreCaseIn(List.of(existingRecord.getEmail())))
-                .thenReturn(List.of(existingUser));
+        when(repository.findByEmailAddressIgnoreCase(existingRecord.getEmail()))
+                .thenReturn(Optional.of(existingUser));
+        when(parser.parse(any())).thenReturn(List.of(existingRecord));
+        when(client.findMissingRoles(properties.getDefaultRoleIds())).thenReturn(List.of());
 
         UserImportService service = new UserImportService(parser, client, properties, repository);
         MockMultipartFile file = new MockMultipartFile("file", new byte[0]);
@@ -77,5 +76,6 @@ class UserImportServiceTest {
         assertEquals(1, result.getExistingUsers().size());
         assertEquals(existingRecord.getEmail(), result.getExistingUsers().get(0).getEmailAddress());
         verify(client, never()).createUser(existingRecord, 1L);
+        verify(client, never()).userExists(existingRecord.getEmail());
     }
 }
