@@ -106,27 +106,29 @@ public class UserImportService {
         return result;
     }
 
-    private List<LiferayUser> readImportedUsers(List<String> createdEmails) {
-        List<LiferayUser> importedUsers = new ArrayList<>();
-        if (createdEmails.isEmpty()) {
-            return importedUsers;
+    private List<LiferayUser> readImportedUsers(List<String> emails) {
+        if (emails.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Map<String, Integer> orderByEmail = new HashMap<>();
+        for (int i = 0; i < emails.size(); i++) {
+            orderByEmail.put(emails.get(i).toLowerCase(), i);
         }
 
         Map<String, LiferayUser> usersByEmail = new HashMap<>();
-        userRepository.findByEmailAddressIgnoreCaseIn(createdEmails)
+        userRepository.findByEmailAddressIgnoreCaseIn(emails)
                 .forEach(user -> usersByEmail.put(user.getEmailAddress().toLowerCase(), user));
 
-        createdEmails.forEach(email -> {
-            LiferayUser user = usersByEmail.get(email.toLowerCase());
-            if (user != null) {
-                importedUsers.add(user);
-                return;
-            }
-
-            LiferayUser placeholder = new LiferayUser();
-            placeholder.setEmailAddress(email);
-            importedUsers.add(placeholder);
-        });
+        List<LiferayUser> importedUsers = new ArrayList<>();
+        orderByEmail.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .forEachOrdered(entry -> {
+                    LiferayUser user = usersByEmail.get(entry.getKey());
+                    if (user != null) {
+                        importedUsers.add(user);
+                    }
+                });
 
         return importedUsers;
     }
