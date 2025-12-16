@@ -3,6 +3,7 @@ package com.example.liferayuserfactory.service;
 import com.example.liferayuserfactory.config.LiferayProperties;
 import com.example.liferayuserfactory.model.ImportResult;
 import com.example.liferayuserfactory.model.UserRecord;
+import com.example.liferayuserfactory.repository.LiferayUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -22,6 +23,7 @@ class UserImportServiceTest {
     void marksInvalidEmailsAsFailures() throws IOException, LiferayException {
         ExcelUserParser parser = mock(ExcelUserParser.class);
         LiferayClient client = mock(LiferayClient.class);
+        LiferayUserRepository repository = mock(LiferayUserRepository.class);
         LiferayProperties properties = new LiferayProperties();
         List<UserRecord> parsedUsers = List.of(
                 new UserRecord("valid@example.com", "First", "User"),
@@ -30,10 +32,10 @@ class UserImportServiceTest {
 
         when(parser.parse(any())).thenReturn(parsedUsers);
         when(client.findMissingRoles(properties.getDefaultRoleIds())).thenReturn(List.of());
-        when(client.userExists("valid@example.com")).thenReturn(false);
+        when(repository.existsByEmailAddressIgnoreCase("valid@example.com")).thenReturn(false);
         doNothing().when(client).createUser(parsedUsers.get(0), 1L);
 
-        UserImportService service = new UserImportService(parser, client, properties);
+        UserImportService service = new UserImportService(parser, client, properties, repository);
         MockMultipartFile file = new MockMultipartFile("file", new byte[0]);
 
         ImportResult result = service.importUsers(file, 1L);
