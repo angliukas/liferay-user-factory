@@ -2,7 +2,6 @@ package com.example.liferayuserfactory.service;
 
 import com.example.liferayuserfactory.config.LiferayProperties;
 import com.example.liferayuserfactory.model.Organization;
-import com.example.liferayuserfactory.model.Role;
 import com.example.liferayuserfactory.model.UserRecord;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +37,7 @@ public class JsonWsLiferayClient implements LiferayClient {
     }
 
     @Override
-    public void createUser(UserRecord record, Long organizationId, List<Long> roleIds) throws LiferayException {
+    public void createUser(UserRecord record, Long organizationId) throws LiferayException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -65,7 +64,7 @@ public class JsonWsLiferayClient implements LiferayClient {
         params.add("jobTitle", properties.getDefaultJobTitle());
         params.add("groupIds", "[]");
         params.add("organizationIds", toJsonArray(organizationId));
-        params.add("roleIds", toJsonArray(roleIds));
+        params.add("roleIds", toJsonArray(properties.getDefaultRoleIds()));
         params.add("userGroupIds", "[]");
         params.add("sendEmail", "false");
 
@@ -91,19 +90,6 @@ public class JsonWsLiferayClient implements LiferayClient {
             return mapArray(response.getBody(), "organizationId", "name", Organization::new);
         } catch (Exception ex) {
             throw new LiferayException("Failed to fetch organizations from Liferay", ex);
-        }
-    }
-
-    @Override
-    public List<Role> getRoles() throws LiferayException {
-        String targetUrl = properties.getBaseUrl()
-                + "/api/jsonws/role/get-company-roles?companyId="
-                + properties.getCompanyId();
-        try {
-            ResponseEntity<String> response = restTemplate.getForEntity(targetUrl, String.class);
-            return mapArray(response.getBody(), "roleId", "name", Role::new);
-        } catch (Exception ex) {
-            throw new LiferayException("Failed to fetch roles from Liferay", ex);
         }
     }
 

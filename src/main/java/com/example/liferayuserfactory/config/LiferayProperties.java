@@ -3,6 +3,9 @@ package com.example.liferayuserfactory.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 @ConfigurationProperties(prefix = "liferay")
 public class LiferayProperties {
@@ -19,6 +22,7 @@ public class LiferayProperties {
     private int birthdayDay = 1;
     private int birthdayYear = 1970;
     private String locale = "en_US";
+    private List<Long> defaultRoleIds = new ArrayList<>(List.of(10526L, 218515L));
 
     public String getBaseUrl() {
         return baseUrl;
@@ -114,5 +118,13 @@ public class LiferayProperties {
 
     public void setLocale(String locale) {
         this.locale = locale;
+    }
+
+    public List<Long> getDefaultRoleIds() {
+        return defaultRoleIds;
+    }
+
+    public void setDefaultRoleIds(List<Long> defaultRoleIds) {
+        this.defaultRoleIds = defaultRoleIds;
     }
 }
