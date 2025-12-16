@@ -75,9 +75,16 @@ public class UserImportService {
                 failures.add(new FailedRow(i + 1, "Missing roles: " + missingRoles, record));
                 continue;
             }
-            if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())) {
-                validationErrors.add(new FailedRow(i + 1, "User with this email already exists", record));
-                existingEmails.add(record.getEmail());
+            try {
+                if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())
+                        || liferayClient.userExists(record.getEmail())) {
+                    existingEmails.add(record.getEmail());
+                    continue;
+                }
+            } catch (LiferayException e) {
+                String reason = "Unable to verify user existence: " + e.getMessage();
+                LOGGER.error("{}", reason);
+                failures.add(new FailedRow(i + 1, reason, record));
                 continue;
             }
             try {
