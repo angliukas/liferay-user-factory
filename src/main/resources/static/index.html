@@ -18,6 +18,16 @@
     <h1>Liferay User Factory</h1>
     <div class="card">
         <p>Upload an Excel file (.xlsx) with columns: email, name, surname.</p>
+        <div style="margin-bottom: 10px;">
+            <label for="organizationSelect">Organization:</label>
+            <select id="organizationSelect">
+                <option value="">-- none --</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="rolesSelect">Roles:</label>
+            <select id="rolesSelect" multiple size="5" style="width: 100%;"></select>
+        </div>
         <input type="file" id="fileInput" accept=".xlsx">
         <button id="uploadBtn">Upload</button>
         <div id="error" class="status" style="color: red"></div>
@@ -40,6 +50,47 @@
     const summary = document.getElementById('summary');
     const failures = document.getElementById('failures');
     const failureRows = document.getElementById('failureRows');
+    const organizationSelect = document.getElementById('organizationSelect');
+    const rolesSelect = document.getElementById('rolesSelect');
+
+    async function loadOrganizations() {
+        try {
+            const response = await fetch('/api/users/organizations');
+            if (!response.ok) {
+                throw new Error('Unable to load organizations');
+            }
+            const organizations = await response.json();
+            organizations.forEach(org => {
+                const option = document.createElement('option');
+                option.value = org.id;
+                option.textContent = org.name;
+                organizationSelect.appendChild(option);
+            });
+        } catch (e) {
+            errorBox.textContent = e.message;
+        }
+    }
+
+    async function loadRoles() {
+        try {
+            const response = await fetch('/api/users/roles');
+            if (!response.ok) {
+                throw new Error('Unable to load roles');
+            }
+            const roles = await response.json();
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.id;
+                option.textContent = role.name;
+                rolesSelect.appendChild(option);
+            });
+        } catch (e) {
+            errorBox.textContent = e.message;
+        }
+    }
+
+    loadOrganizations();
+    loadRoles();
 
     uploadBtn.addEventListener('click', async () => {
         errorBox.textContent = '';
@@ -54,6 +105,12 @@
 
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
+        if (organizationSelect.value) {
+            formData.append('organizationId', organizationSelect.value);
+        }
+        Array.from(rolesSelect.selectedOptions).forEach(option => {
+            formData.append('roleIds', option.value);
+        });
 
         uploadBtn.disabled = true;
         uploadBtn.textContent = 'Uploading...';

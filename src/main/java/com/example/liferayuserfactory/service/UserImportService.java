@@ -2,6 +2,8 @@ package com.example.liferayuserfactory.service;
 
 import com.example.liferayuserfactory.model.FailedRow;
 import com.example.liferayuserfactory.model.ImportResult;
+import com.example.liferayuserfactory.model.Organization;
+import com.example.liferayuserfactory.model.Role;
 import com.example.liferayuserfactory.model.UserRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,7 @@ public class UserImportService {
         this.liferayClient = liferayClient;
     }
 
-    public ImportResult importUsers(MultipartFile file) throws IOException {
+    public ImportResult importUsers(MultipartFile file, Long organizationId, List<Long> roleIds) throws IOException {
         List<UserRecord> users = parser.parse(file.getInputStream());
         ImportResult result = new ImportResult();
         result.setTotalRows(users.size());
@@ -38,7 +40,7 @@ public class UserImportService {
                 continue;
             }
             try {
-                liferayClient.createUser(record);
+                liferayClient.createUser(record, organizationId, roleIds);
                 created++;
             } catch (LiferayException e) {
                 LOGGER.error("Unable to create user {}: {}", record.getEmail(), e.getMessage());
@@ -48,5 +50,13 @@ public class UserImportService {
         result.setCreated(created);
         result.setFailures(failures);
         return result;
+    }
+
+    public List<Organization> getOrganizations() throws LiferayException {
+        return liferayClient.getOrganizations();
+    }
+
+    public List<Role> getRoles() throws LiferayException {
+        return liferayClient.getRoles();
     }
 }
