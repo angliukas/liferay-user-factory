@@ -74,7 +74,7 @@ public class UserImportService {
                 continue;
             }
             if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())) {
-                failures.add(new FailedRow(i + 1, "User with this email already exists", record));
+                validationErrors.add(new FailedRow(i + 1, "User with this email already exists", record));
                 continue;
             }
             try {
