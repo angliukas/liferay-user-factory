@@ -136,8 +136,7 @@
         renderOrganizations(organizationSearch.value);
     });
 
-    uploadBtn.addEventListener('click', async () => {
-        errorBox.textContent = '';
+    function clearResults() {
         summary.classList.add('hidden');
         imported.classList.add('hidden');
         importedRows.innerHTML = '';
@@ -147,6 +146,10 @@
         validationRows.innerHTML = '';
         failures.classList.add('hidden');
         failureRows.innerHTML = '';
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+        errorBox.textContent = '';
 
         if (!fileInput.files.length) {
             errorBox.textContent = 'Please choose a file to upload.';
@@ -174,6 +177,7 @@
                 throw new Error('Upload failed: ' + response.statusText);
             }
             const result = await response.json();
+            clearResults();
             summary.innerHTML = `Imported <strong>${result.created}</strong> of <strong>${result.totalRows}</strong> rows.`;
             summary.classList.remove('hidden');
 
