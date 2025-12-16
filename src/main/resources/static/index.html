@@ -20,8 +20,9 @@
         <p>Upload an Excel file (.xlsx) with columns: email, name, surname.</p>
         <div style="margin-bottom: 10px;">
             <label for="organizationSelect">Organization:</label>
+            <input type="text" id="organizationSearch" placeholder="Search organizations" style="width: 100%; margin: 4px 0;" />
             <select id="organizationSelect">
-                <option value="">-- none --</option>
+                <option value="">-- select an organization --</option>
             </select>
         </div>
         <div style="margin-bottom: 10px;">
@@ -52,6 +53,22 @@
     const failureRows = document.getElementById('failureRows');
     const organizationSelect = document.getElementById('organizationSelect');
     const rolesSelect = document.getElementById('rolesSelect');
+    const organizationSearch = document.getElementById('organizationSearch');
+
+    let organizationsCache = [];
+
+    function renderOrganizations(filter = '') {
+        const normalizedFilter = filter.trim().toLowerCase();
+        organizationSelect.innerHTML = '<option value="">-- select an organization --</option>';
+        organizationsCache
+            .filter(org => org.name.toLowerCase().includes(normalizedFilter))
+            .forEach(org => {
+                const option = document.createElement('option');
+                option.value = org.id;
+                option.textContent = org.name;
+                organizationSelect.appendChild(option);
+            });
+    }
 
     async function loadOrganizations() {
         try {
@@ -59,13 +76,8 @@
             if (!response.ok) {
                 throw new Error('Unable to load organizations');
             }
-            const organizations = await response.json();
-            organizations.forEach(org => {
-                const option = document.createElement('option');
-                option.value = org.id;
-                option.textContent = org.name;
-                organizationSelect.appendChild(option);
-            });
+            organizationsCache = await response.json();
+            renderOrganizations(organizationSearch.value);
         } catch (e) {
             errorBox.textContent = e.message;
         }
@@ -92,6 +104,10 @@
     loadOrganizations();
     loadRoles();
 
+    organizationSearch.addEventListener('input', () => {
+        renderOrganizations(organizationSearch.value);
+    });
+
     uploadBtn.addEventListener('click', async () => {
         errorBox.textContent = '';
         summary.classList.add('hidden');
@@ -103,11 +119,19 @@
             return;
         }
 
+        if (!organizationSelect.value) {
+            errorBox.textContent = 'Please select an organization.';
+            return;
+        }
+
+        if (!rolesSelect.selectedOptions.length) {
+            errorBox.textContent = 'Please select at least one role.';
+            return;
+        }
+
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
-        if (organizationSelect.value) {
-            formData.append('organizationId', organizationSelect.value);
-        }
+        formData.append('organizationId', organizationSelect.value);
         Array.from(rolesSelect.selectedOptions).forEach(option => {
             formData.append('roleIds', option.value);
         });

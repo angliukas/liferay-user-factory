@@ -5,6 +5,7 @@ import com.example.liferayuserfactory.model.Organization;
 import com.example.liferayuserfactory.model.Role;
 import com.example.liferayuserfactory.service.LiferayException;
 import com.example.liferayuserfactory.service.UserImportService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,9 +33,15 @@ public class UploadController {
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     public ResponseEntity<ImportResult> upload(@RequestParam("file") MultipartFile file,
-                                               @RequestParam(value = "organizationId", required = false) Long organizationId,
-                                               @RequestParam(value = "roleIds", required = false) List<Long> roleIds)
+                                               @RequestParam("organizationId") Long organizationId,
+                                               @RequestParam("roleIds") List<Long> roleIds)
             throws IOException {
+        if (organizationId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization is required");
+        }
+        if (roleIds == null || roleIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one role is required");
+        }
         ImportResult result = importService.importUsers(file, organizationId, roleIds);
         return ResponseEntity.ok(result);
     }

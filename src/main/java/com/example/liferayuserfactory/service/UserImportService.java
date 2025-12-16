@@ -27,6 +27,12 @@ public class UserImportService {
     }
 
     public ImportResult importUsers(MultipartFile file, Long organizationId, List<Long> roleIds) throws IOException {
+        if (organizationId == null) {
+            throw new IllegalArgumentException("Organization is required");
+        }
+        if (roleIds == null || roleIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one role is required");
+        }
         List<UserRecord> users = parser.parse(file.getInputStream());
         ImportResult result = new ImportResult();
         result.setTotalRows(users.size());
