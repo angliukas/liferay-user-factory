@@ -27,6 +27,34 @@ class ExcelUserParserTest {
         assertEquals("Jane", results.get(1).getFirstName());
     }
 
+    @Test
+    void parsesAllPopulatedRowsEvenWithGaps() throws IOException {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet();
+            sheet.createRow(0).createCell(0).setCellValue("email");
+            sheet.getRow(0).createCell(1).setCellValue("name");
+            sheet.getRow(0).createCell(2).setCellValue("surname");
+
+            sheet.createRow(1).createCell(0).setCellValue("first@example.com");
+            sheet.getRow(1).createCell(1).setCellValue("First");
+            sheet.getRow(1).createCell(2).setCellValue("User");
+
+            sheet.createRow(3).createCell(0).setCellValue("second@example.com");
+            sheet.getRow(3).createCell(1).setCellValue("Second");
+            sheet.getRow(3).createCell(2).setCellValue("Person");
+
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                workbook.write(baos);
+                ExcelUserParser parser = new ExcelUserParser();
+                List<UserRecord> results = parser.parse(new ByteArrayInputStream(baos.toByteArray()));
+
+                assertEquals(2, results.size());
+                assertEquals("first@example.com", results.get(0).getEmail());
+                assertEquals("second@example.com", results.get(1).getEmail());
+            }
+        }
+    }
+
     private byte[] buildWorkbook() throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet();
