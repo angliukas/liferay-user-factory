@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,12 +16,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class JsonWsLiferayClient implements LiferayClient {
@@ -93,6 +97,45 @@ public class JsonWsLiferayClient implements LiferayClient {
         }
     }
 
+    @Override
+    public boolean userExists(String email) throws LiferayException {
+        String targetUrl = UriComponentsBuilder.fromHttpUrl(properties.getBaseUrl())
+                .path("/api/jsonws/user/get-user-by-email-address")
+                .queryParam("companyId", properties.getCompanyId())
+                .queryParam("emailAddress", email)
+                .build()
+                .encode(StandardCharsets.UTF_8)
+                .toUriString();
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(targetUrl, String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return false;
+            }
+            throw new LiferayException("Failed to check if user exists", e);
+        } catch (RestClientException ex) {
+            throw new LiferayException("Failed to check if user exists", ex);
+        }
+    }
+
+    @Override
+    public List<Long> findMissingRoles(List<Long> roleIds) throws LiferayException {
+        List<Long> missing = new ArrayList<>();
+        if (roleIds == null) {
+            return missing;
+        }
+        for (Long roleId : roleIds) {
+            if (roleId == null) {
+                continue;
+            }
+            if (!roleExists(roleId)) {
+                missing.add(roleId);
+            }
+        }
+        return missing;
+    }
+
     private String toJsonArray(Long value) {
         if (value == null) {
             return "[]";
@@ -128,5 +171,23 @@ public class JsonWsLiferayClient implements LiferayClient {
     @FunctionalInterface
     private interface EntityMapper<T> {
         T map(long id, String name);
+    }
+
+    private boolean roleExists(long roleId) throws LiferayException {
+        String targetUrl = UriComponentsBuilder.fromHttpUrl(properties.getBaseUrl())
+                .path("/api/jsonws/role/get-role")
+                .queryParam("roleId", roleId)
+                .toUriString();
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(targetUrl, String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return false;
+            }
+            throw new LiferayException("Failed to verify role existence", e);
+        } catch (RestClientException ex) {
+            throw new LiferayException("Failed to verify role existence", ex);
+        }
     }
 }
