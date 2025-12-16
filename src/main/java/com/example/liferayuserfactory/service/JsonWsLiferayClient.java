@@ -97,7 +97,7 @@ public class JsonWsLiferayClient implements LiferayClient {
     @Override
     public List<Role> getRoles() throws LiferayException {
         String targetUrl = properties.getBaseUrl()
-                + "/api/jsonws/role/get-roles?companyId="
+                + "/api/jsonws/role/get-company-roles?companyId="
                 + properties.getCompanyId();
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(targetUrl, String.class);
