@@ -11,7 +11,6 @@ public class LiferayProperties {
     private String adminUsername = "test@liferay.com";
     private String adminPassword = "test";
     private long companyId = 0L;
-    private boolean dryRun = true;
     private boolean autoPassword = true;
     private String defaultPassword = "liferay";
     private boolean autoScreenName = true;
@@ -51,14 +50,6 @@ public class LiferayProperties {
 
     public void setCompanyId(long companyId) {
         this.companyId = companyId;
-    }
-
-    public boolean isDryRun() {
-        return dryRun;
-    }
-
-    public void setDryRun(boolean dryRun) {
-        this.dryRun = dryRun;
     }
 
     public boolean isAutoPassword() {
