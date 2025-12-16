@@ -11,6 +11,7 @@ public class ImportResult {
     private List<FailedRow> failures = new ArrayList<>();
     private List<FailedRow> validationErrors = new ArrayList<>();
     private List<LiferayUser> importedUsers = new ArrayList<>();
+    private List<LiferayUser> existingUsers = new ArrayList<>();
 
     public int getTotalRows() {
         return totalRows;
@@ -50,5 +51,13 @@ public class ImportResult {
 
     public void setImportedUsers(List<LiferayUser> importedUsers) {
         this.importedUsers = importedUsers;
+    }
+
+    public List<LiferayUser> getExistingUsers() {
+        return existingUsers;
+    }
+
+    public void setExistingUsers(List<LiferayUser> existingUsers) {
+        this.existingUsers = existingUsers;
     }
 }

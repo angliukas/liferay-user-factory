@@ -47,6 +47,15 @@
                 <tbody id="importedRows"></tbody>
             </table>
         </div>
+        <div id="existing" class="status hidden">
+            <h3>Existing users</h3>
+            <table>
+                <thead>
+                <tr><th>User ID</th><th>Email</th></tr>
+                </thead>
+                <tbody id="existingRows"></tbody>
+            </table>
+        </div>
         <div id="failures" class="status hidden">
             <h3>Failed rows</h3>
             <table>
@@ -65,6 +74,8 @@
     const summary = document.getElementById('summary');
     const imported = document.getElementById('imported');
     const importedRows = document.getElementById('importedRows');
+    const existing = document.getElementById('existing');
+    const existingRows = document.getElementById('existingRows');
     const validation = document.getElementById('validation');
     const validationRows = document.getElementById('validationRows');
     const failures = document.getElementById('failures');
@@ -111,6 +122,8 @@
         summary.classList.add('hidden');
         imported.classList.add('hidden');
         importedRows.innerHTML = '';
+        existing.classList.add('hidden');
+        existingRows.innerHTML = '';
         validation.classList.add('hidden');
         validationRows.innerHTML = '';
         failures.classList.add('hidden');
@@ -151,6 +164,15 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td>`;
                     importedRows.appendChild(tr);
+                });
+            }
+
+            if (result.existingUsers && result.existingUsers.length) {
+                existing.classList.remove('hidden');
+                result.existingUsers.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td>`;
+                    existingRows.appendChild(tr);
                 });
             }
 
