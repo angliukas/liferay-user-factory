@@ -108,7 +108,23 @@ public class JsonWsLiferayClient implements LiferayClient {
                 .toUriString();
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(targetUrl, String.class);
-            return response.getStatusCode().is2xxSuccessful();
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                return false;
+            }
+            String body = response.getBody();
+            if (body == null || body.isBlank()) {
+                return false;
+            }
+            try {
+                JsonNode root = objectMapper.readTree(body);
+                if (root.has("exception")) {
+                    LOGGER.info("User not found: {} ({}), treating as non-existent", email, root.path("exception").asText());
+                    return false;
+                }
+                return true;
+            } catch (java.io.IOException e) {
+                throw new LiferayException("Failed to parse user existence response", e);
+            }
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return false;
