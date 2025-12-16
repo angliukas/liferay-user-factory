@@ -29,6 +29,24 @@
         <button id="uploadBtn">Upload</button>
         <div id="error" class="status" style="color: red"></div>
         <div id="summary" class="status hidden"></div>
+        <div id="imported" class="status hidden">
+            <h3>Imported users</h3>
+            <table>
+                <thead>
+                <tr><th>User ID</th><th>Email</th></tr>
+                </thead>
+                <tbody id="importedRows"></tbody>
+            </table>
+        </div>
+        <div id="validation" class="status hidden">
+            <h3>Validation errors</h3>
+            <table>
+                <thead>
+                <tr><th>Row</th><th>Email</th><th>Name</th><th>Surname</th><th>Reason</th></tr>
+                </thead>
+                <tbody id="validationRows"></tbody>
+            </table>
+        </div>
         <div id="failures" class="status hidden">
             <h3>Failed rows</h3>
             <table>
@@ -45,6 +63,10 @@
     const fileInput = document.getElementById('fileInput');
     const errorBox = document.getElementById('error');
     const summary = document.getElementById('summary');
+    const imported = document.getElementById('imported');
+    const importedRows = document.getElementById('importedRows');
+    const validation = document.getElementById('validation');
+    const validationRows = document.getElementById('validationRows');
     const failures = document.getElementById('failures');
     const failureRows = document.getElementById('failureRows');
     const organizationSelect = document.getElementById('organizationSelect');
@@ -87,6 +109,10 @@
     uploadBtn.addEventListener('click', async () => {
         errorBox.textContent = '';
         summary.classList.add('hidden');
+        imported.classList.add('hidden');
+        importedRows.innerHTML = '';
+        validation.classList.add('hidden');
+        validationRows.innerHTML = '';
         failures.classList.add('hidden');
         failureRows.innerHTML = '';
 
@@ -118,6 +144,24 @@
             const result = await response.json();
             summary.innerHTML = `Imported <strong>${result.created}</strong> of <strong>${result.totalRows}</strong> rows.`;
             summary.classList.remove('hidden');
+
+            if (result.importedUsers && result.importedUsers.length) {
+                imported.classList.remove('hidden');
+                result.importedUsers.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td>`;
+                    importedRows.appendChild(tr);
+                });
+            }
+
+            if (result.validationErrors && result.validationErrors.length) {
+                validation.classList.remove('hidden');
+                result.validationErrors.forEach(v => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${v.rowIndex}</td><td>${v.user?.email || ''}</td><td>${v.user?.firstName || ''}</td><td>${v.user?.lastName || ''}</td><td>${v.reason}</td>`;
+                    validationRows.appendChild(tr);
+                });
+            }
 
             if (result.failures && result.failures.length) {
                 failures.classList.remove('hidden');
