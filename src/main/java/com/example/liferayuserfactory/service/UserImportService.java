@@ -15,9 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Service
@@ -50,8 +51,10 @@ public class UserImportService {
         List<FailedRow> failures = new ArrayList<>();
         List<FailedRow> validationErrors = new ArrayList<>();
         int created = 0;
-        List<String> createdEmails = new ArrayList<>();
-        List<String> existingEmails = new ArrayList<>();
+        List<UserSummary> importedUsers = new ArrayList<>();
+        List<UserSummary> existingUsers = new ArrayList<>();
+        Set<String> importedEmailSet = new HashSet<>();
+        Set<String> existingEmailSet = new HashSet<>();
         List<Long> missingRoles;
         try {
             missingRoles = liferayClient.findMissingRoles(properties.getDefaultRoleIds());
@@ -79,9 +82,13 @@ public class UserImportService {
                 continue;
             }
             try {
-                if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())
-                        || liferayClient.userExists(record.getEmail())) {
-                    existingEmails.add(record.getEmail());
+                Optional<LiferayUser> existingUser = userRepository.findByEmailAddressIgnoreCase(record.getEmail());
+                if (existingUser.isPresent()) {
+                    addSummary(existingUsers, existingEmailSet, existingUser.get());
+                    continue;
+                }
+                if (liferayClient.userExists(record.getEmail())) {
+                    addSummary(existingUsers, existingEmailSet, record.getEmail());
                     continue;
                 }
             } catch (LiferayException e) {
@@ -93,7 +100,7 @@ public class UserImportService {
             try {
                 liferayClient.createUser(record, organizationId);
                 created++;
-                createdEmails.add(record.getEmail());
+                addSummary(importedUsers, importedEmailSet, record.getEmail());
             } catch (LiferayException e) {
                 LOGGER.error("Unable to create user {}: {}", record.getEmail(), e.getMessage());
                 failures.add(new FailedRow(i + 1, e.getMessage(), record));
@@ -102,36 +109,29 @@ public class UserImportService {
         result.setCreated(created);
         result.setFailures(failures);
         result.setValidationErrors(validationErrors);
-        result.setImportedUsers(readImportedUsers(createdEmails));
-        result.setExistingUsers(readImportedUsers(existingEmails));
+        result.setImportedUsers(importedUsers);
+        result.setExistingUsers(existingUsers);
         return result;
     }
 
-    private List<UserSummary> readImportedUsers(List<String> emails) {
-        if (emails.isEmpty()) {
-            return new ArrayList<>();
+    private void addSummary(List<UserSummary> summaries, Set<String> seenEmails, String email) {
+        if (email == null || email.isBlank()) {
+            return;
         }
+        Optional<LiferayUser> user = userRepository.findByEmailAddressIgnoreCase(email);
+        user.ifPresent(found -> addSummary(summaries, seenEmails, found));
+    }
 
-        Map<String, Integer> orderByEmail = new HashMap<>();
-        for (int i = 0; i < emails.size(); i++) {
-            orderByEmail.put(emails.get(i).toLowerCase(), i);
+    private void addSummary(List<UserSummary> summaries, Set<String> seenEmails, LiferayUser user) {
+        if (user == null || user.getEmailAddress() == null) {
+            return;
         }
-
-        Map<String, LiferayUser> usersByEmail = new HashMap<>();
-        userRepository.findByEmailAddressIgnoreCaseIn(emails)
-                .forEach(user -> usersByEmail.put(user.getEmailAddress().toLowerCase(), user));
-
-        List<UserSummary> importedUsers = new ArrayList<>();
-        orderByEmail.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .forEachOrdered(entry -> {
-                    LiferayUser user = usersByEmail.get(entry.getKey());
-                    if (user != null) {
-                        importedUsers.add(new UserSummary(user.getId(), user.getEmailAddress(), user.getCreateDate()));
-                    }
-                });
-
-        return importedUsers;
+        String normalizedEmail = user.getEmailAddress().toLowerCase();
+        if (seenEmails.contains(normalizedEmail)) {
+            return;
+        }
+        seenEmails.add(normalizedEmail);
+        summaries.add(new UserSummary(user.getId(), user.getEmailAddress(), user.getCreateDate()));
     }
 
     public List<Organization> getOrganizations() throws LiferayException {
