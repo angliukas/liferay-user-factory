@@ -48,6 +48,7 @@ public class UserImportService {
         List<FailedRow> validationErrors = new ArrayList<>();
         int created = 0;
         List<String> createdEmails = new ArrayList<>();
+        List<String> existingEmails = new ArrayList<>();
         List<Long> missingRoles;
         try {
             missingRoles = liferayClient.findMissingRoles(properties.getDefaultRoleIds());
@@ -76,6 +77,7 @@ public class UserImportService {
             }
             if (userRepository.existsByEmailAddressIgnoreCase(record.getEmail())) {
                 validationErrors.add(new FailedRow(i + 1, "User with this email already exists", record));
+                existingEmails.add(record.getEmail());
                 continue;
             }
             try {
@@ -91,6 +93,7 @@ public class UserImportService {
         result.setFailures(failures);
         result.setValidationErrors(validationErrors);
         result.setImportedUsers(readImportedUsers(createdEmails));
+        result.setExistingUsers(readImportedUsers(existingEmails));
         return result;
     }
 
