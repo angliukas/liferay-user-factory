@@ -90,6 +90,12 @@
             return '';
         }
 
+        if (Array.isArray(value)) {
+            const [year, month = 1, day = 1, hour = 0, minute = 0, second = 0, nano = 0] = value;
+            const dateFromArray = new Date(Date.UTC(year, month - 1, day, hour, minute, second, Math.floor(nano / 1_000_000)));
+            return Number.isNaN(dateFromArray.getTime()) ? '' : dateFromArray.toLocaleString();
+        }
+
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) {
             return '';
