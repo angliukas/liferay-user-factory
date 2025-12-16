@@ -19,4 +19,16 @@ public class LoggingLiferayClient implements LiferayClient {
     public java.util.List<Organization> getOrganizations() {
         return java.util.Collections.emptyList();
     }
+
+    @Override
+    public boolean userExists(String email) {
+        LOGGER.info("Would check if user exists: {}", email);
+        return false;
+    }
+
+    @Override
+    public java.util.List<Long> findMissingRoles(java.util.List<Long> roleIds) {
+        LOGGER.info("Would verify roles exist: {}", roleIds);
+        return java.util.Collections.emptyList();
+    }
 }

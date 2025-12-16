@@ -9,4 +9,8 @@ public interface LiferayClient {
     void createUser(UserRecord record, Long organizationId) throws LiferayException;
 
     List<Organization> getOrganizations() throws LiferayException;
+
+    boolean userExists(String email) throws LiferayException;
+
+    List<Long> findMissingRoles(List<Long> roleIds) throws LiferayException;
 }
