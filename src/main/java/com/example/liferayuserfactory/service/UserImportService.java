@@ -2,6 +2,7 @@ package com.example.liferayuserfactory.service;
 
 import com.example.liferayuserfactory.model.FailedRow;
 import com.example.liferayuserfactory.model.ImportResult;
+import com.example.liferayuserfactory.model.LiferayUser;
 import com.example.liferayuserfactory.model.Organization;
 import com.example.liferayuserfactory.model.UserRecord;
 import com.example.liferayuserfactory.config.LiferayProperties;
@@ -44,6 +45,7 @@ public class UserImportService {
         result.setTotalRows(users.size());
 
         List<FailedRow> failures = new ArrayList<>();
+        List<FailedRow> validationErrors = new ArrayList<>();
         int created = 0;
         List<Long> missingRoles;
         try {
@@ -60,11 +62,11 @@ public class UserImportService {
         for (int i = 0; i < users.size(); i++) {
             UserRecord record = users.get(i);
             if (record.getEmail() == null || record.getEmail().isBlank()) {
-                failures.add(new FailedRow(i + 1, "Missing email", record));
+                validationErrors.add(new FailedRow(i + 1, "Missing email", record));
                 continue;
             }
             if (!isValidEmail(record.getEmail())) {
-                failures.add(new FailedRow(i + 1, "Invalid email format", record));
+                validationErrors.add(new FailedRow(i + 1, "Invalid email format", record));
                 continue;
             }
             if (!missingRoles.isEmpty()) {
@@ -85,7 +87,15 @@ public class UserImportService {
         }
         result.setCreated(created);
         result.setFailures(failures);
+        result.setValidationErrors(validationErrors);
+        result.setImportedUsers(readAllImportedUsers());
         return result;
+    }
+
+    private List<LiferayUser> readAllImportedUsers() {
+        List<LiferayUser> importedUsers = new ArrayList<>();
+        userRepository.findAll().forEach(importedUsers::add);
+        return importedUsers;
     }
 
     public List<Organization> getOrganizations() throws LiferayException {
