@@ -5,16 +5,18 @@ Simple Spring Boot 3 service that lets you upload an Excel workbook containing `
 ## Running locally
 
 ```bash
-./mvnw spring-boot:run
+mvn -Dspring-boot.run.profiles=mssql spring-boot:run
 ```
 
 Or with Maven installed:
 
 ```bash
-mvn spring-boot:run
+mvn -Dspring-boot.run.profiles=mssql spring-boot:run
 ```
 
 The app starts on port `8081` by default. Adjust `src/main/resources/application.properties` with your Liferay endpoint, credentials, and company id. Set `liferay.dry-run=false` to actually invoke the remote API instead of logging.
+
+For MSSQL databases, configure the connection in `src/main/resources/application-mssql.properties` and run with the `mssql` profile enabled as shown above.
 
 ## Usage
 
