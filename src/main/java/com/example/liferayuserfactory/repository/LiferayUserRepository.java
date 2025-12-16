@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface LiferayUserRepository extends CrudRepository<LiferayUser, Long> {
 
     boolean existsByEmailAddressIgnoreCase(String emailAddress);
+
+    Iterable<LiferayUser> findByEmailAddressIgnoreCaseIn(Iterable<String> emailAddresses);
 }

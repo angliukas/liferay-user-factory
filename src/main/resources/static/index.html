@@ -29,15 +29,6 @@
         <button id="uploadBtn">Upload</button>
         <div id="error" class="status" style="color: red"></div>
         <div id="summary" class="status hidden"></div>
-        <div id="imported" class="status hidden">
-            <h3>Imported users</h3>
-            <table>
-                <thead>
-                <tr><th>User ID</th><th>Email</th></tr>
-                </thead>
-                <tbody id="importedRows"></tbody>
-            </table>
-        </div>
         <div id="validation" class="status hidden">
             <h3>Validation errors</h3>
             <table>
@@ -45,6 +36,15 @@
                 <tr><th>Row</th><th>Email</th><th>Name</th><th>Surname</th><th>Reason</th></tr>
                 </thead>
                 <tbody id="validationRows"></tbody>
+            </table>
+        </div>
+        <div id="imported" class="status hidden">
+            <h3>Imported users</h3>
+            <table>
+                <thead>
+                <tr><th>User ID</th><th>Email</th></tr>
+                </thead>
+                <tbody id="importedRows"></tbody>
             </table>
         </div>
         <div id="failures" class="status hidden">

@@ -47,6 +47,7 @@ public class UserImportService {
         List<FailedRow> failures = new ArrayList<>();
         List<FailedRow> validationErrors = new ArrayList<>();
         int created = 0;
+        List<String> createdEmails = new ArrayList<>();
         List<Long> missingRoles;
         try {
             missingRoles = liferayClient.findMissingRoles(properties.getDefaultRoleIds());
@@ -80,6 +81,7 @@ public class UserImportService {
             try {
                 liferayClient.createUser(record, organizationId);
                 created++;
+                createdEmails.add(record.getEmail());
             } catch (LiferayException e) {
                 LOGGER.error("Unable to create user {}: {}", record.getEmail(), e.getMessage());
                 failures.add(new FailedRow(i + 1, e.getMessage(), record));
@@ -88,13 +90,17 @@ public class UserImportService {
         result.setCreated(created);
         result.setFailures(failures);
         result.setValidationErrors(validationErrors);
-        result.setImportedUsers(readAllImportedUsers());
+        result.setImportedUsers(readImportedUsers(createdEmails));
         return result;
     }
 
-    private List<LiferayUser> readAllImportedUsers() {
+    private List<LiferayUser> readImportedUsers(List<String> createdEmails) {
         List<LiferayUser> importedUsers = new ArrayList<>();
-        userRepository.findAll().forEach(importedUsers::add);
+        if (createdEmails.isEmpty()) {
+            return importedUsers;
+        }
+        userRepository.findByEmailAddressIgnoreCaseIn(createdEmails)
+                .forEach(importedUsers::add);
         return importedUsers;
     }
 
