@@ -184,6 +184,9 @@
             if (result.importedUsers && result.importedUsers.length) {
                 imported.classList.remove('hidden');
                 result.importedUsers.forEach(user => {
+                    if (!user.id && !user.createDate) {
+                        return;
+                    }
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td><td>${formatDate(user.createDate)}</td>`;
                     importedRows.appendChild(tr);
@@ -193,6 +196,9 @@
             if (result.existingUsers && result.existingUsers.length) {
                 existing.classList.remove('hidden');
                 result.existingUsers.forEach(user => {
+                    if (!user.id && !user.createDate) {
+                        return;
+                    }
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>${user.id ?? ''}</td><td>${user.emailAddress ?? ''}</td><td>${formatDate(user.createDate)}</td>`;
                     existingRows.appendChild(tr);
