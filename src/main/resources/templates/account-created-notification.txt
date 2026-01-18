@@ -1,0 +1,12 @@
+Account Created Notification
+
+Welcome {0} {1},
+
+Your account for the Liferay portal has been created.
+You can sign in using the following email address:
+Email: {2}
+
+Sign in at: {3}
+
+Regards,
+Liferay Portal Team

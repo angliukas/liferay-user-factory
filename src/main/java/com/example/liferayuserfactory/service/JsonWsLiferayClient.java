@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.text.MessageFormat;
 
 @Component
 public class JsonWsLiferayClient implements LiferayClient {
@@ -33,6 +36,7 @@ public class JsonWsLiferayClient implements LiferayClient {
     private final RestTemplate restTemplate;
     private final LiferayProperties properties;
     private final ObjectMapper objectMapper;
+    private String accountCreatedTemplate;
 
     public JsonWsLiferayClient(RestTemplate restTemplate, LiferayProperties properties, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -78,6 +82,7 @@ public class JsonWsLiferayClient implements LiferayClient {
             ResponseEntity<String> response = restTemplate.postForEntity(targetUrl, request, String.class);
             LOGGER.info("Created user {} {} <{}> - response status {}", record.getFirstName(), record.getLastName(),
                     record.getEmail(), response.getStatusCode());
+            logAccountCreatedNotification(record);
         } catch (RestClientException ex) {
             throw new LiferayException("Failed to create user via JSON WS", ex);
         }
@@ -205,5 +210,32 @@ public class JsonWsLiferayClient implements LiferayClient {
         } catch (RestClientException ex) {
             throw new LiferayException("Failed to verify role existence", ex);
         }
+    }
+
+    private void logAccountCreatedNotification(UserRecord record) {
+        try {
+            String template = loadAccountCreatedTemplate();
+            String formattedTemplate = MessageFormat.format(template,
+                    record.getFirstName(),
+                    record.getLastName(),
+                    record.getEmail(),
+                    properties.getBaseUrl());
+            LOGGER.info("Account Created Notification template:\n{}", formattedTemplate);
+        } catch (IOException e) {
+            LOGGER.warn("Unable to read Account Created Notification template", e);
+        }
+    }
+
+    private String loadAccountCreatedTemplate() throws IOException {
+        if (accountCreatedTemplate == null) {
+            try (var inputStream = getClass().getClassLoader()
+                    .getResourceAsStream("templates/account-created-notification.txt")) {
+                if (inputStream == null) {
+                    throw new IOException("Account Created Notification template not found on classpath");
+                }
+                accountCreatedTemplate = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            }
+        }
+        return accountCreatedTemplate;
     }
 }
